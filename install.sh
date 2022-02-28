@@ -10,7 +10,10 @@
 
 #VARIABLES DE ENTORNO.
 OE_VERSION="14.0"
+#Si activas el proxy define un dominio o subdominio, tambien asignale la cantidad de los workers, esto dependera de la
+#capacidad de su servidor.
 WITH_PROXY="False"
+WORKERS="3"
 IS_ENTERPRISE="True"
 DOMAIN=indumed.pragmatic.com.pe
 WKHTMLTOX=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
@@ -45,6 +48,35 @@ echo -e "\n--- Actualizando pip3 - reportlab ---"
 sudo pip3 install reportlab --upgrade
 echo -e "\n--- Actualizando pip3 - python3-testresources ---"
 sudo apt-get install -y python3-testresources
+#--------------------------------------------------
+# Modificar odoo.conf
+#--------------------------------------------------
+sudo touch /etc/odoo/odoo.conf
+if [ $IS_ENTERPRISE = "True" ]; then
+  echo -e "\n--- Agregando ruta enterprise ---"
+  sudo su root -c "printf 'addons_path=/mnt/enterprise,/usr/lib/python3/dist-packages/odoo/addons\n' >> /etc/odoo/odoo.conf"
+fi
+if [ $WITH_PROXY = "True" ]; then
+  echo -e "\n--- Instalando Nginx ---"
+  sudo apt-get install nginx -y
+  echo -e "\n--- Instalando Cerbot ---"
+  sudo snap install core
+  sudo snap refresh core
+  sudo snap install --classic certbot
+  sudo ln -s /snap/bin/certbot /usr/bin/certbot
+  echo -e "\n--- Modificando odoo.conf para el funcionamiento con Nginx y Cerbot ---"
+  sudo su root -c "printf 'proxy_mode=True\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'workers=${WORKERS}\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'xmlrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'netrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
+fi
+#--------------------------------------------------
+# Instalar Nginx y Cerbot
+#--------------------------------------------------
+
+#--------------------------------------------------
+# Instalar Odoo
+#--------------------------------------------------
 echo -e "\n--- Install Odoo ---"
 #wget -O - https://nightly.odoo.com/odoo.key | apt-key add -
 #echo "deb http://nightly.odoo.com/${OE_VERSION}/nightly/deb/ ./" >> /etc/apt/sources.list.d/odoo.list
@@ -71,7 +103,4 @@ if [ $IS_ENTERPRISE = "True" ]; then
   sudo -H pip3 install ofxparse dbfread ebaysdk firebase_admin
   sudo npm install -g less
   sudo npm install -g less-plugin-clean-css
-fi
-if [ $IS_ENTERPRISE = "True" ]; then
-  sudo su root -c "printf 'addons_path=/mnt/enterprise,/usr/lib/python3/dist-packages/odoo/addons\n' >> /etc/odoo/odoo.conf"
 fi
