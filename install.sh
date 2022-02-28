@@ -25,6 +25,10 @@ echo -e "\n--- Instalando Postgresql ---"
 #--------------------------------------------------
 # Instar dependencias
 #--------------------------------------------------
+echo -e "\n--- Instalando nodejs npm ---"
+sudo apt-get install nodejs npm -y
+echo -e "\n--- Instalando rtlcss ---"
+sudo npm install -g rtlcss
 echo -e "\n--- Instalando wkhtmltopdf ---"
 #wget $WKHTMLTOX
 #sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb
