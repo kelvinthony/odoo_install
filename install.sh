@@ -5,13 +5,13 @@
 # Realizar archivo ejecutable:
 # sudo chmod +x install.sh
 # Ejecutar con el siguiente comando:
-# ./install
+# ./install.sh
 ################################################################################
 
 #VARIABLES DE ENTORNO.
 OE_VERSION =  "14.0"
 WITH_PROXY = "False"
-IS_ENTERPRISE = "False"
+IS_ENTERPRISE = "True"
 DOMAIN = indumed.pragmatic.com.pe
 WKHTMLTOX=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
 
