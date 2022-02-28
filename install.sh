@@ -9,10 +9,10 @@
 ################################################################################
 
 #VARIABLES DE ENTORNO.
-OE_VERSION =  "14.0"
-WITH_PROXY = "False"
-IS_ENTERPRISE = "True"
-DOMAIN = indumed.pragmatic.com.pe
+OE_VERSION="14.0"
+WITH_PROXY="False"
+IS_ENTERPRISE="True"
+DOMAIN=indumed.pragmatic.com.pe
 WKHTMLTOX=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
 
 #--------------------------------------------------
