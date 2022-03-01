@@ -62,13 +62,12 @@ fi
 echo -e "\n--- Install Odoo ---"
 #wget -O - https://nightly.odoo.com/odoo.key | apt-key add -
 #echo "deb http://nightly.odoo.com/${OE_VERSION}/nightly/deb/ ./" >> /etc/apt/sources.list.d/odoo.list
-apt-get update && apt-get install odoo -y
+#apt-get update && apt-get install odoo -y
 if [ $IS_ENTERPRISE = "True" ]; then
   sudo pip3 install psycopg2-binary pdfminer.six
   echo -e "\n--- Create symlink for node"
   sudo ln -s /usr/bin/nodejs /usr/bin/node
-  sudo su $OE_USER -c "mkdir /mnt/enterprise"
-
+  sudo -c "mkdir /mnt/enterprise"
   GITHUB_RESPONSE=$(sudo git clone --depth 1 --branch $OE_VERSION https://www.github.com/odoo/enterprise "/mnt/enterprise" 2>&1)
   while [[ $GITHUB_RESPONSE == *"Authentication"* ]]; do
     echo "------------------------Atencion------------------------------"
