@@ -12,10 +12,10 @@
 OE_VERSION="14.0"
 #Si activas el proxy define un dominio o subdominio, tambien asignale la cantidad de los workers, esto dependera de la
 #capacidad de su servidor.
-WITH_PROXY="False"
+WITH_PROXY="True"
 WORKERS="3"
 IS_ENTERPRISE="True"
-DOMAIN=indumed.pragmatic.com.pe
+DOMAIN="indumed.pragmatic.com.pe"
 WKHTMLTOX=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
 
 #--------------------------------------------------
@@ -69,10 +69,53 @@ if [ $WITH_PROXY = "True" ]; then
   sudo su root -c "printf 'workers=${WORKERS}\n' >> /etc/odoo/odoo.conf"
   sudo su root -c "printf 'xmlrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
   sudo su root -c "printf 'netrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
+  echo -e "\n--- Configurando archivo nginx ---"
+  rm /etc/nginx/sites-available/default
+  rm /etc/nginx/sites-enabled/default
+  sudo touch /etc/nginx/sites-available/${DOMAIN}
+  NAMES=(${DOMAIN//./ })
+  NGINX_TEMPLATE=$(
+    cat <<-END
+  upstream ${NAMES[0]} {
+    server 127.0.0.1:8069;
+  }
+  upstream ${NAMES[0]}-im {
+    server 127.0.0.1:8072;
+  }
+  server {
+    server_name ${DOMAIN};
+    access_log /var/log/nginx/${NAMES[0]}.access.log;
+    error_log /var/log/nginx/${NAMES[0]}.error.log;
+    client_max_body_size 1024M;
+    proxy_read_timeout 720s;
+    proxy_connect_timeout 720s;
+    proxy_send_timeout 720s;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+  location / {
+    proxy_redirect off;
+    proxy_pass http://${NAMES[0]};
+  }
+  location /longpolling {
+    proxy_pass http://${NAMES[0]}-im;
+  }
+  location ~* /web/static/ {
+    proxy_cache_valid 200 90m;
+    proxy_buffering on;
+    expires 864000;
+    proxy_pass http://${NAMES[0]};
+  }
+  gzip_types text/css text/less text/plain text/xml application/xml application/json application/javascript;
+  gzip on;
+  }
+END
+  )
+  echo -e "${NGINX_TEMPLATE}"
+  sudo su root -c "printf '${NGINX_TEMPLATE}' >> /etc/nginx/sites-available/${DOMAIN}"
+
 fi
-#--------------------------------------------------
-# Instalar Nginx y Cerbot
-#--------------------------------------------------
 
 #--------------------------------------------------
 # Instalar Odoo
