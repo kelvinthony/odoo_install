@@ -22,7 +22,7 @@ WKHTMLTOX=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wk
 # Actualizar los repositorios en Ubuntu
 #--------------------------------------------------
 echo -e "\n--- Actualizando servidor ---"
-#sudo apt-get update
+sudo apt-get update
 echo -e "\n--- Instalando Postgresql ---"
 sudo apt install postgresql -y
 #--------------------------------------------------
@@ -49,11 +49,24 @@ sudo pip3 install reportlab --upgrade
 echo -e "\n--- Actualizando pip3 - python3-testresources ---"
 sudo apt-get install -y python3-testresources
 #--------------------------------------------------
+# Modificar odoo.conf
+#--------------------------------------------------
+sudo touch /etc/odoo/odoo.conf
+if [ $IS_ENTERPRISE = "True" ]; then
+  echo -e "\n--- Agregando ruta enterprise ---"
+  sudo su root -c "printf '[options]\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'addons_path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/enterprise\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'db_host=False\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'db_port=False\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'db_user=odoo\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'db_password=False\n' >> /etc/odoo/odoo.conf"
+fi
+#--------------------------------------------------
 # Instalar Odoo
 #--------------------------------------------------
 echo -e "\n--- Install Odoo ---"
 wget -O - https://nightly.odoo.com/odoo.key | apt-key add -
-echo "deb http://nightly.odoo.com/${OE_VERSION}/nightly/deb/ ./" >> /etc/apt/sources.list.d/odoo.list
+echo "deb http://nightly.odoo.com/${OE_VERSION}/nightly/deb/ ./" >>/etc/apt/sources.list.d/odoo.list
 apt-get update && apt-get install odoo -y
 if [ $IS_ENTERPRISE = "True" ]; then
   sudo pip3 install psycopg2-binary pdfminer.six
@@ -144,11 +157,9 @@ END
   service nginx restart
   sudo certbot --nginx -d ${DOMAIN}
 fi
-#--------------------------------------------------
-# Modificar odoo.conf
-#--------------------------------------------------
-sudo touch /etc/odoo/odoo.conf
-if [ $IS_ENTERPRISE = "True" ]; then
-  echo -e "\n--- Agregando ruta enterprise ---"
-  #sudo su root -c "printf 'addons_path=/mnt/enterprise,/usr/lib/python3/dist-packages/odoo/addons\n' >> /etc/odoo/odoo.conf"
+echo -e "\n--- Instalacion correcta ---"
+if [ $WITH_PROXY = "True" ]; then
+  echo -e "\n--- Accede a su instancia de odoo ${OE_VERSION} a travez ${DOMAIN} ---"
+else
+  echo -e "\n--- Accede a su instancia de odoo ${OE_VERSION} a travez $(hostname  -I | cut -f1 -d' '):8069 ---"
 fi
