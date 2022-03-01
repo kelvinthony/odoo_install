@@ -107,6 +107,7 @@ if [ $WITH_PROXY = "True" ]; then
   rm /etc/nginx/sites-enabled/default
   sudo touch /etc/nginx/sites-available/${DOMAIN}
   NAMES=(${DOMAIN//./ })
+  SPECIAL_CHARTER="$"
   NGINX_TEMPLATE=$(
     cat <<-END
 upstream ${NAMES[0]} {
@@ -123,10 +124,10 @@ server {
   proxy_read_timeout 720s;
   proxy_connect_timeout 720s;
   proxy_send_timeout 720s;
-  proxy_set_header X-Forwarded-Host '"`echo '$'`"'host;
-  proxy_set_header X-Forwarded-For '"`echo '$'`"'proxy_add_x_forwarded_for;
-  proxy_set_header X-Forwarded-Proto '"`echo '$'`"'scheme;
-  proxy_set_header X-Real-IP '"`echo '$'`"'remote_addr;
+  proxy_set_header X-Forwarded-Host ${SPECIAL_CHARTER}host;
+  proxy_set_header X-Forwarded-For ${SPECIAL_CHARTER}proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto ${SPECIAL_CHARTER}scheme;
+  proxy_set_header X-Real-IP ${SPECIAL_CHARTER}remote_addr;
   location / {
     proxy_redirect off;
     proxy_pass http://${NAMES[0]};
