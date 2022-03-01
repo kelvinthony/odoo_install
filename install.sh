@@ -24,7 +24,7 @@ WKHTMLTOX=https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wk
 echo -e "\n--- Actualizando servidor ---"
 #sudo apt-get update
 echo -e "\n--- Instalando Postgresql ---"
-#sudo apt install postgresql -y
+sudo apt install postgresql -y
 #--------------------------------------------------
 # Instar dependencias
 #--------------------------------------------------
@@ -33,8 +33,8 @@ sudo apt-get install nodejs npm -y
 echo -e "\n--- Instalando rtlcss ---"
 sudo npm install -g rtlcss
 echo -e "\n--- Instalando wkhtmltopdf ---"
-#wget $WKHTMLTOX
-#sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb
+wget $WKHTMLTOX
+sudo apt install ./wkhtmltox_0.12.6-1.focal_amd64.deb
 sudo apt -f install -y
 echo -e "\n--- Instalando pip3 ---"
 sudo apt-get -y install python3-pip
@@ -52,9 +52,9 @@ sudo apt-get install -y python3-testresources
 # Instalar Odoo
 #--------------------------------------------------
 echo -e "\n--- Install Odoo ---"
-#wget -O - https://nightly.odoo.com/odoo.key | apt-key add -
-#echo "deb http://nightly.odoo.com/${OE_VERSION}/nightly/deb/ ./" >> /etc/apt/sources.list.d/odoo.list
-#apt-get update && apt-get install odoo -y
+wget -O - https://nightly.odoo.com/odoo.key | apt-key add -
+echo "deb http://nightly.odoo.com/${OE_VERSION}/nightly/deb/ ./" >> /etc/apt/sources.list.d/odoo.list
+apt-get update && apt-get install odoo -y
 if [ $IS_ENTERPRISE = "True" ]; then
   sudo pip3 install psycopg2-binary pdfminer.six
   echo -e "\n--- Create symlink for node"
