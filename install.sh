@@ -56,67 +56,6 @@ if [ $IS_ENTERPRISE = "True" ]; then
   echo -e "\n--- Agregando ruta enterprise ---"
   sudo su root -c "printf 'addons_path=/mnt/enterprise,/usr/lib/python3/dist-packages/odoo/addons\n' >> /etc/odoo/odoo.conf"
 fi
-if [ $WITH_PROXY = "True" ]; then
-  echo -e "\n--- Instalando Nginx ---"
-  sudo apt-get install nginx -y
-  echo -e "\n--- Instalando Cerbot ---"
-  sudo snap install core
-  sudo snap refresh core
-  sudo snap install --classic certbot
-  sudo ln -s /snap/bin/certbot /usr/bin/certbot
-  echo -e "\n--- Modificando odoo.conf para el funcionamiento con Nginx y Cerbot ---"
-  sudo su root -c "printf 'proxy_mode=True\n' >> /etc/odoo/odoo.conf"
-  sudo su root -c "printf 'workers=${WORKERS}\n' >> /etc/odoo/odoo.conf"
-  sudo su root -c "printf 'xmlrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
-  sudo su root -c "printf 'netrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
-  echo -e "\n--- Configurando archivo nginx ---"
-  rm /etc/nginx/sites-available/default
-  rm /etc/nginx/sites-enabled/default
-  sudo touch /etc/nginx/sites-available/${DOMAIN}
-  NAMES=(${DOMAIN//./ })
-  NGINX_TEMPLATE=$(
-    cat <<-END
-  upstream ${NAMES[0]} {
-    server 127.0.0.1:8069;
-  }
-  upstream ${NAMES[0]}-im {
-    server 127.0.0.1:8072;
-  }
-  server {
-    server_name ${DOMAIN};
-    access_log /var/log/nginx/${NAMES[0]}.access.log;
-    error_log /var/log/nginx/${NAMES[0]}.error.log;
-    client_max_body_size 1024M;
-    proxy_read_timeout 720s;
-    proxy_connect_timeout 720s;
-    proxy_send_timeout 720s;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
-  location / {
-    proxy_redirect off;
-    proxy_pass http://${NAMES[0]};
-  }
-  location /longpolling {
-    proxy_pass http://${NAMES[0]}-im;
-  }
-  location ~* /web/static/ {
-    proxy_cache_valid 200 90m;
-    proxy_buffering on;
-    expires 864000;
-    proxy_pass http://${NAMES[0]};
-  }
-  gzip_types text/css text/less text/plain text/xml application/xml application/json application/javascript;
-  gzip on;
-  }
-END
-  )
-  echo -e "${NGINX_TEMPLATE}"
-  sudo su root -c "printf '${NGINX_TEMPLATE}' >> /etc/nginx/sites-available/${DOMAIN}"
-
-fi
-
 #--------------------------------------------------
 # Instalar Odoo
 #--------------------------------------------------
@@ -146,4 +85,70 @@ if [ $IS_ENTERPRISE = "True" ]; then
   sudo -H pip3 install ofxparse dbfread ebaysdk firebase_admin
   sudo npm install -g less
   sudo npm install -g less-plugin-clean-css
+fi
+#--------------------------------------------------
+# Instalar SSL para el dominio.
+#--------------------------------------------------
+if [ $WITH_PROXY = "True" ]; then
+  echo -e "\n--- Instalando Nginx ---"
+  sudo apt-get install nginx -y
+  echo -e "\n--- Instalando Cerbot ---"
+  sudo snap install core
+  sudo snap refresh core
+  sudo snap install --classic certbot
+  sudo ln -s /snap/bin/certbot /usr/bin/certbot
+  echo -e "\n--- Modificando odoo.conf para el funcionamiento con Nginx y Cerbot ---"
+  sudo su root -c "printf 'proxy_mode=True\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'workers=${WORKERS}\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'xmlrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
+  sudo su root -c "printf 'netrpc_interface=127.0.0.1\n' >> /etc/odoo/odoo.conf"
+  echo -e "\n--- Configurando archivo nginx ---"
+  rm /etc/nginx/sites-available/default
+  rm /etc/nginx/sites-enabled/default
+  sudo touch /etc/nginx/sites-available/${DOMAIN}
+  NAMES=(${DOMAIN//./ })
+  NGINX_TEMPLATE=$(
+    cat <<-END
+upstream ${NAMES[0]} {
+  server 127.0.0.1:8069;
+}
+upstream ${NAMES[0]}-im {
+  server 127.0.0.1:8072;
+}
+server {
+  server_name ${DOMAIN};
+  access_log /var/log/nginx/${NAMES[0]}.access.log;
+  error_log /var/log/nginx/${NAMES[0]}.error.log;
+  client_max_body_size 1024M;
+  proxy_read_timeout 720s;
+  proxy_connect_timeout 720s;
+  proxy_send_timeout 720s;
+  proxy_set_header X-Forwarded-Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Real-IP $remote_addr;
+  location / {
+    proxy_redirect off;
+    proxy_pass http://${NAMES[0]};
+  }
+  location /longpolling {
+    proxy_pass http://${NAMES[0]}-im;
+  }
+  location ~* /web/static/ {
+    proxy_cache_valid 200 90m;
+    proxy_buffering on;
+    expires 864000;
+    proxy_pass http://${NAMES[0]};
+  }
+  gzip_types text/css text/less text/plain text/xml application/xml application/json application/javascript;
+  gzip on;
+}
+END
+  )
+  sudo su root -c "printf '${NGINX_TEMPLATE}' >> /etc/nginx/sites-available/${DOMAIN}"
+  ln /etc/nginx/sites-available/${DOMAIN} /etc/nginx/sites-enabled/${DOMAIN}
+  echo -e "\n--- Verificando si la configuracion es correcta ---"
+  nginx -t
+  service nginx restart
+  sudo certbot --nginx -d ${DOMAIN}
 fi
