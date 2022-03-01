@@ -109,6 +109,8 @@ if [ $WITH_PROXY = "True" ]; then
   echo -e "\n--- Configurando archivo nginx ---"
   rm /etc/nginx/sites-available/default
   rm /etc/nginx/sites-enabled/default
+  rm /etc/nginx/sites-available/${DOMAIN}
+  rm /etc/nginx/sites-enabled/${DOMAIN}
   sudo touch /etc/nginx/sites-available/${DOMAIN}
   NAMES=(${DOMAIN//./ })
   SPECIAL_CHARTER="$"
