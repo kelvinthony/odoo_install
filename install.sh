@@ -49,14 +49,6 @@ sudo pip3 install reportlab --upgrade
 echo -e "\n--- Actualizando pip3 - python3-testresources ---"
 sudo apt-get install -y python3-testresources
 #--------------------------------------------------
-# Modificar odoo.conf
-#--------------------------------------------------
-sudo touch /etc/odoo/odoo.conf
-if [ $IS_ENTERPRISE = "True" ]; then
-  echo -e "\n--- Agregando ruta enterprise ---"
-  sudo su root -c "printf 'addons_path=/mnt/enterprise,/usr/lib/python3/dist-packages/odoo/addons\n' >> /etc/odoo/odoo.conf"
-fi
-#--------------------------------------------------
 # Instalar Odoo
 #--------------------------------------------------
 echo -e "\n--- Install Odoo ---"
@@ -151,4 +143,12 @@ END
   nginx -t
   service nginx restart
   sudo certbot --nginx -d ${DOMAIN}
+fi
+#--------------------------------------------------
+# Modificar odoo.conf
+#--------------------------------------------------
+sudo touch /etc/odoo/odoo.conf
+if [ $IS_ENTERPRISE = "True" ]; then
+  echo -e "\n--- Agregando ruta enterprise ---"
+  #sudo su root -c "printf 'addons_path=/mnt/enterprise,/usr/lib/python3/dist-packages/odoo/addons\n' >> /etc/odoo/odoo.conf"
 fi
